@@ -47,7 +47,11 @@ def main(arguments):
     init_logging()
     initialize_directories(arguments)
     check_directories()
-    pdb_ids = collect_pdb_ids(arguments["input"])
+    pdb_ids = []
+    if arguments["pdbId"]:
+        pdb_ids = [arguments["pdbId"]]
+    else:
+        pdb_ids = collect_pdb_ids(arguments["input"])
     if arguments["threads"] < 2:
         convert_single_thread(pdb_ids, arguments)
     else:
@@ -142,6 +146,8 @@ def convert_pdb_file(task):
 
 
 def convert_file(pdb_id, pocket_path, residues_path, output_path):
+    logging.info("Converting %s", pocket_path)
+
     residues = read_residues(residues_path)
     pockets = read_pockets(pocket_path)
 
@@ -280,7 +286,7 @@ def create_output_file(pdb_id, sites, chains):
 
 
 def validate_file(path):
-    logging.debug("Starting validation.")
+    logging.debug("Starting validation [%s]", path)
     validator = Validator(DATA_RESOURCE)
     validator.load_schema(FUNPDBE_SCHEMA)
     validator.load_json(path)
@@ -293,7 +299,7 @@ def validate_file(path):
     residue_indexes = ResidueIndexes(validator.json_data)
     if not residue_indexes.check_every_residue():
         logging.error(residue_indexes.mismatches)
-        raise RuntimeError("Invalid residues: {}".format(path))
+        raise RuntimeError("Invalid residues in {}".format(path))
 
     logging.debug("Output file is valid.")
 
@@ -304,6 +310,7 @@ if __name__ == "__main__":
     parser.add_argument("--input", type=str,
                         default=os.path.join(
                             THIS_DIRECTORY, "..", "data", "p2rank-outputs"))
+    parser.add_argument("--pdbId", type=str, default=None)
     parser.add_argument("--output", type=str,
                         default=os.path.join(
                             THIS_DIRECTORY, "..", "data", "funpdbe"))
