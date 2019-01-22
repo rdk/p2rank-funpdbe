@@ -48,6 +48,7 @@ find_errors() {
     grep "$SEARCH_STR" -r $OUT_LOG_FAILED -l | wc -l
 }
 
+
 process_pdb_id() {
 
     # run p2rank-to-funpdbe
@@ -93,12 +94,16 @@ rm -f $SUMMARY
 echo "OK: `ls $OUT_FUNPDBE | wc -l`" | tee -a $SUMMARY
 echo "FAILED: `ls $OUT_LOG_FAILED | wc -l`" | tee -a $SUMMARY
 
-echo "  Connection errors: `find_errors 'requests.exceptions.ConnectionError'`" | tee -a $SUMMARY
-echo "  Invalid schema:    `find_errors 'Invalid schema for'`" | tee -a $SUMMARY
-echo "  Invalid residues:  `find_errors 'Invalid residues'`" | tee -a $SUMMARY
+echo "  Connection errors:    `find_errors 'requests.exceptions.ConnectionError'`" | tee -a $SUMMARY
+echo "  Invalid schema:       `find_errors 'Invalid schema for'`" | tee -a $SUMMARY
+echo "    Something is empty: `find_errors '\[\] is too short'`"    | tee -a $SUMMARY
+echo "  Invalid residues:     `find_errors 'Invalid residues'`" | tee -a $SUMMARY
+echo "    Complete mismatch:  `find_errors 'completely mismatched'`"    | tee -a $SUMMARY
+echo "    AA mismatch:        `find_errors 'not match residue'`" | tee -a $SUMMARY
+
 
 # collect error lines with details
-grep "residue numbering is completely mismatched" -r $OUT_LOG_FAILED > $OUT/errors_numbering_mismatched.txt  # within Invalid residues 
+grep "completely mismatched"                      -r $OUT_LOG_FAILED > $OUT/errors_numbering_mismatched.txt  # within Invalid residues 
 grep "not match residue"                          -r $OUT_LOG_FAILED > $OUT/errors_mismatched_residue.txt    # within Invalid residues
 grep "JSON does not comply with schema"           -r $OUT_LOG_FAILED > $OUT/errors_schema.txt
 
